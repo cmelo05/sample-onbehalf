@@ -18,7 +18,7 @@ namespace NewRepositoryAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<Run> Get(int id)
+        public async Task<IList<string>> GetLogs(int id)
         {
             if (id <= 0)
             {
@@ -29,7 +29,32 @@ namespace NewRepositoryAPI.Controllers
 
             var run = await this._repository.GetRunAsync(id);
 
-            return run;
+            return run.Logs;
+        }
+
+        [HttpPatch]
+        public async Task<WorkflowRun> Append(int id, string log)
+        {
+            if (id <= 0)
+            {
+                this._logger.LogError("LogController.Get: Invalid id - {id}", id);
+                this.HttpContext.Response.StatusCode = 400;
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(log))
+            {
+                this._logger.LogError("LogController.Get: No {0}", nameof(log));
+                this.HttpContext.Response.StatusCode = 400;
+                return null;
+            }
+
+            var runToUpdate = await this._repository.GetRunAsync(id);
+            runToUpdate.Logs.Add(log);
+
+            var updatedRun = await this._repository.UpdateRunAsync(runToUpdate);
+
+            return updatedRun;
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using NewRepositoryAPI.Models;
+using NewRepositoryAPI.Repositories;
 using NewRepositoryAPI.Services;
 
 namespace NewRepositoryAPI.Controllers
@@ -10,26 +10,35 @@ namespace NewRepositoryAPI.Controllers
     {
         private readonly ILogger<NewRepositoryController> _logger;
         private IBackendService _backendService;
-        public NewRepositoryController(ILogger<NewRepositoryController> logger, IBackendService backendService)
+        private IRepository _repository;
+        public NewRepositoryController(ILogger<NewRepositoryController> logger, IBackendService backendService, IRepository repository)
         {
             this._logger = logger;
             this._backendService = backendService;
+            this._repository = repository;
         }
 
         [HttpPost]
-        public async Task<Run> CreateRepository()
+        public async Task<IActionResult> CreateRepository(string repositoryName)
         {
             var authorizationHeader = this.HttpContext.Request.Headers["Authorization"];
 
             if (string.IsNullOrEmpty(authorizationHeader))
             {
-                this.HttpContext.Response.StatusCode = 401;
-                return null;
+                this._logger.LogError("NewRepositoryController.CreateRepository: No authorization header");
+                return Unauthorized();
             }
 
-            var run = await this._backendService.CreateAsync(authorizationHeader);
+            if (string.IsNullOrEmpty(repositoryName))
+            {
+                this._logger.LogError("NewRepositoryController.CreateRepository: No {0}", nameof(repositoryName));
+                this.HttpContext.Response.StatusCode = 400;
+                return BadRequest();
+            }
 
-            return run;
+            var workflowRun = await this._backendService.CreateAsync(authorizationHeader, repositoryName);
+
+            return Ok(workflowRun);
         }
     }
 }

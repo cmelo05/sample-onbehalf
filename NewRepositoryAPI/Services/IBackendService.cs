@@ -4,6 +4,6 @@ namespace NewRepositoryAPI.Services
 {
     public interface IBackendService
     {
-        Task<Run> CreateAsync(string authHeader);
+        Task<WorkflowRun> CreateAsync(string authHeader, string repositoryName);
     }
 }
